@@ -28,6 +28,53 @@ def load_model(filename):
     with open(filename, "rb") as file:
         return pickle.load(file)
 
+# Move this function up, after the other function definitions (around line 25)
+def get_strategy_explanation(risk_level, vix_value, eonia_rate, jpy_value, relative_risk):
+    """Generate personalized investment strategy based on market conditions"""
+    
+    base_explanation = {
+        "high": {
+            "summary": "🚨 Defensive Strategy Recommended",
+            "rationale": f"""Current market conditions suggest elevated risk. The VIX at {vix_value:.1f} indicates significant market fear, 
+                while the EONIA rate of {eonia_rate:.2f} suggests banking sector stress. The strong Yen (¥{jpy_value:.1f}) further confirms 
+                risk-off sentiment.""",
+            "actions": [
+                "Consider reducing equity exposure",
+                "Increase cash holdings for opportunities",
+                "Look into safe-haven assets",
+                "Review stop-loss levels"
+            ],
+            "timeframe": "Short-term defensive positioning recommended for next 2-3 weeks"
+        },
+        "medium": {
+            "summary": "⚠️ Balanced Approach Needed",
+            "rationale": f"""Markets showing mixed signals. VIX at {vix_value:.1f} suggests moderate uncertainty, 
+                while other indicators remain within normal ranges. Historical comparison shows {relative_risk:.1f}% 
+                relative risk level.""",
+            "actions": [
+                "Maintain balanced portfolio allocation",
+                "Consider partial hedging strategies",
+                "Stay alert but avoid reactive decisions",
+                "Look for selective opportunities"
+            ],
+            "timeframe": "Monitor situation weekly, prepare for increased volatility"
+        },
+        "low": {
+            "summary": "✅ Growth Opportunities Present",
+            "rationale": f"""Market indicators suggest favorable conditions. Low VIX at {vix_value:.1f} indicates market calm, 
+                supported by stable interbank rates at {eonia_rate:.2f}. Historical metrics are positive.""",
+            "actions": [
+                "Consider strategic market opportunities",
+                "Maintain normal asset allocation",
+                "Focus on quality investments",
+                "Set up monitoring for change signals"
+            ],
+            "timeframe": "Medium-term positive outlook, review monthly"
+        }
+    }
+    
+    return base_explanation[risk_level.lower()]
+
 # Load your saved model
 model = load_model('xgb_weights.pkl')
 
@@ -376,49 +423,3 @@ with strat_col2:
             - Risk Level: {current_risk.title()}
             - Market Phase: {'Stress' if crash_prob > 70 else 'Normal' if crash_prob > 30 else 'Calm'}
         """)
-
-def get_strategy_explanation(risk_level, vix_value, eonia_rate, jpy_value, relative_risk):
-    """Generate personalized investment strategy based on market conditions"""
-    
-    base_explanation = {
-        "high": {
-            "summary": "🚨 Defensive Strategy Recommended",
-            "rationale": f"""Current market conditions suggest elevated risk. The VIX at {vix_value:.1f} indicates significant market fear, 
-                while the EONIA rate of {eonia_rate:.2f} suggests banking sector stress. The strong Yen (¥{jpy_value:.1f}) further confirms 
-                risk-off sentiment.""",
-            "actions": [
-                "Consider reducing equity exposure",
-                "Increase cash holdings for opportunities",
-                "Look into safe-haven assets",
-                "Review stop-loss levels"
-            ],
-            "timeframe": "Short-term defensive positioning recommended for next 2-3 weeks"
-        },
-        "medium": {
-            "summary": "⚠️ Balanced Approach Needed",
-            "rationale": f"""Markets showing mixed signals. VIX at {vix_value:.1f} suggests moderate uncertainty, 
-                while other indicators remain within normal ranges. Historical comparison shows {relative_risk:.1f}% 
-                relative risk level.""",
-            "actions": [
-                "Maintain balanced portfolio allocation",
-                "Consider partial hedging strategies",
-                "Stay alert but avoid reactive decisions",
-                "Look for selective opportunities"
-            ],
-            "timeframe": "Monitor situation weekly, prepare for increased volatility"
-        },
-        "low": {
-            "summary": "✅ Growth Opportunities Present",
-            "rationale": f"""Market indicators suggest favorable conditions. Low VIX at {vix_value:.1f} indicates market calm, 
-                supported by stable interbank rates at {eonia_rate:.2f}. Historical metrics are positive.""",
-            "actions": [
-                "Consider strategic market opportunities",
-                "Maintain normal asset allocation",
-                "Focus on quality investments",
-                "Set up monitoring for change signals"
-            ],
-            "timeframe": "Medium-term positive outlook, review monthly"
-        }
-    }
-    
-    return base_explanation[risk_level.lower()]
