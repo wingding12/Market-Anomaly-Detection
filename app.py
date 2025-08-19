@@ -239,8 +239,15 @@ except Exception as e:
 st.sidebar.subheader("⚡ Performance")
 load_time = time.time() - start_time
 st.sidebar.metric("Page Load Time", f"{load_time:.3f} seconds")
-st.sidebar.metric("Daily Queries Handled", "500+")
-st.sidebar.metric("Uptime", "99.7%")
+
+# Calculate real metrics
+data_points = len(df)
+feature_count = len(df.columns)
+date_range_days = (df.index.max() - df.index.min()).days
+
+st.sidebar.metric("Historical Data Points", f"{data_points:,}")
+st.sidebar.metric("Market Indicators", f"{feature_count}")
+st.sidebar.metric("Data Coverage", f"{date_range_days:,} days")
 
 # Now create the selectbox with the proper dates
 available_dates = df.index.tolist()
