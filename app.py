@@ -5,13 +5,51 @@ import plotly.graph_objects as go
 import time
 import logging
 from datetime import datetime, timedelta
+import os
+from pathlib import Path
 
 # Set up logging for uptime monitoring
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
 logging.basicConfig(
-    filename='app_performance.log',
+    filename=log_dir / 'app_performance.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+# Input validation functions
+def validate_date_input(date_input, available_dates):
+    """Validate date input against available data"""
+    if not available_dates:
+        raise ValueError("No historical data available")
+    
+    min_date = min(available_dates)
+    max_date = max(available_dates)
+    
+    if pd.Timestamp(date_input) < min_date or pd.Timestamp(date_input) > max_date:
+        raise ValueError(f"Date must be between {min_date.date()} and {max_date.date()}")
+    
+    return True
+
+def validate_model_prediction(prediction):
+    """Validate model prediction output"""
+    if prediction is None or len(prediction) != 2:
+        raise ValueError("Invalid model prediction format")
+    
+    if not all(0 <= p <= 1 for p in prediction):
+        raise ValueError("Prediction probabilities must be between 0 and 1")
+    
+    return True
+
+def sanitize_user_input(user_input):
+    """Sanitize user text input"""
+    if user_input is None:
+        return ""
+    
+    # Remove potential XSS characters
+    import re
+    sanitized = re.sub(r'[<>"\']', '', str(user_input))
+    return sanitized[:500]  # Limit length
 
 # Performance tracking
 def track_performance(func):
@@ -169,15 +207,30 @@ st.divider()
 
 # Load your data with error handling
 try:
+    if not os.path.exists('FormattedData.csv'):
+        raise FileNotFoundError("FormattedData.csv not found")
+    
     df = pd.read_csv('FormattedData.csv')
+    
+    if df.empty:
+        raise ValueError("Dataset is empty")
+    
     # Convert the Date column to datetime
     df['Date'] = pd.to_datetime(df['Date'])
     # Set Date as the index
     df.set_index('Date', inplace=True)
     df = preprocess_data(df)
+    
+    if len(df) < 10:
+        st.warning("⚠️ Limited historical data available. Predictions may be less accurate.")
+        
+except FileNotFoundError as e:
+    logging.error(f"Data file not found: {str(e)}")
+    st.error("📊 Historical data file not found. Please ensure FormattedData.csv is in the application directory.")
+    st.stop()
 except Exception as e:
     logging.error(f"Data loading error: {str(e)}")
-    st.error("Error loading data. Please try again later.")
+    st.error("⚠️ Error loading data. Please try again later.")
     st.stop()
 
 # Model performance metrics
@@ -199,12 +252,19 @@ available_dates = df.index.tolist()
 
 # Improve date selector styling
 st.subheader("📅 Analyze a Date")
-selected_date = st.date_input(
-    label="Choose a date to analyze",
-    value=pd.Timestamp(available_dates[0]),
-    min_value=pd.Timestamp(available_dates[0]),
-    max_value=pd.Timestamp(available_dates[-1])
-)
+
+try:
+    validate_date_input(available_dates[0], available_dates)
+    selected_date = st.date_input(
+        label="Choose a date to analyze",
+        value=pd.Timestamp(available_dates[0]),
+        min_value=pd.Timestamp(available_dates[0]),
+        max_value=pd.Timestamp(available_dates[-1])
+    )
+    validate_date_input(selected_date, available_dates)
+except ValueError as e:
+    st.error(f"Date validation error: {str(e)}")
+    st.stop()
 
 # Start timing prediction performance
 prediction_start = time.time()
@@ -213,8 +273,14 @@ prediction_start = time.time()
 closest_date = df.index[df.index.get_indexer([pd.Timestamp(selected_date)], method='nearest')[0]]
 selected_data = df.loc[closest_date]
 
-# Make prediction
-prediction_proba = model.predict_proba(selected_data.values.reshape(1, -1))[0]
+# Make prediction with validation
+try:
+    prediction_proba = model.predict_proba(selected_data.values.reshape(1, -1))[0]
+    validate_model_prediction(prediction_proba)
+except Exception as e:
+    logging.error(f"Prediction error: {str(e)}")
+    st.error("⚠️ Error generating prediction. Please try a different date.")
+    st.stop()
 
 # Calculate min and max probabilities from all predictions
 all_predictions = model.predict_proba(df.values)[:, 1]
@@ -491,6 +557,7 @@ with strat_col2:
     # Add an interactive Q&A section
     st.markdown("### Ask the Advisor")
     user_question = st.text_input("Have a specific question about the strategy?")
+    user_question = sanitize_user_input(user_question)
     
     if user_question:
         if "risk" in user_question.lower():
