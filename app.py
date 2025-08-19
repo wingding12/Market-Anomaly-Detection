@@ -233,12 +233,7 @@ except Exception as e:
     st.error("⚠️ Error loading data. Please try again later.")
     st.stop()
 
-# Model performance metrics
-st.sidebar.subheader("📊 Model Performance")
-st.sidebar.metric("Accuracy", f"{model_metrics['accuracy']}%")
-st.sidebar.metric("Precision", f"{model_metrics['precision']}%")
-st.sidebar.metric("Recall", f"{model_metrics['recall']}%")
-st.sidebar.metric("F1 Score", f"{model_metrics['f1_score']}%")
+
 
 # Response time tracking
 st.sidebar.subheader("⚡ Performance")
