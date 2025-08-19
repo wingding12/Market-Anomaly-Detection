@@ -178,29 +178,7 @@ st.markdown("""
     Select a date below to see the prediction and key metrics for that time period.
 """)
 
-# Add comparison to enterprise solutions
-with st.expander("💼 How we compare to enterprise solutions"):
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("### Our Solution")
-        st.markdown("✅ 85% prediction accuracy")
-        st.markdown("✅ Sub-second response times")
-        st.markdown("✅ 99.7% uptime")
-        st.markdown("✅ Cost-effective")
-    
-    with col2:
-        st.markdown("### Enterprise Solutions")
-        st.markdown("✅ 90% prediction accuracy")
-        st.markdown("✅ Sub-second response times")
-        st.markdown("✅ 99.9% uptime")
-        st.markdown("❌ 3x more expensive")
-    
-    with col3:
-        st.markdown("### Value Proposition")
-        st.markdown("- 95% of functionality")
-        st.markdown("- 30% of the cost")
-        st.markdown("- Saved clients avg. 12%")
-        st.markdown("- Identified 8/10 events")
+
 
 # Add a divider
 st.divider()
